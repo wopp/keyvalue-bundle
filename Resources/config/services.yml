@@ -1,0 +1,53 @@
+parameters:
+    wopp_key_value.key.value.repository.class: Wopp\KeyValueBundle\Repository\KeyValueRepository
+    wopp_key_value.predis.client.factory.class: Wopp\KeyValueBundle\Factory\PredisClientFactory
+    wopp_key_value.key.value.service.mongo.class: Wopp\KeyValueBundle\Service\KeyValueServiceMongoImpl
+    wopp_key_value.key.value.service.redis.class: Wopp\KeyValueBundle\Service\KeyValueServiceRedisImpl
+    wopp_key_value.key.value.service.cache.class: Wopp\KeyValueBundle\Service\KeyValueServiceCacheImpl
+    wopp_key_value.repository.factory.class: Wopp\KeyValueBundle\Factory\RespositoryFactory
+
+services:
+
+    wopp_key_value.key.value.repository:
+        class: %wopp_key_value.key.value.repository.class%
+        public: true
+        factory_service: wopp.repository.factory
+        factory_method: getRepository
+        arguments:
+          - Wopp\KeyValueBundle\Model\KeyValue
+          - '%wopp_key_value.document_manager%'
+
+    wopp_key_value.key.value.service.mongo:
+        class: %wopp_key_value.key.value.service.mongo.class%
+        arguments:
+          - '@wopp_key_value.key.value.repository'
+
+    wopp_key_value.key.value.service.redis:
+        class: %wopp_key_value.key.value.service.redis.class%
+        arguments:
+          - '@wopp.redis.client'
+
+    wopp_key_value.key.value.service.redis.cached:
+        class: %wopp_key_value.key.value.service.cache.class%
+        arguments:
+          - '@wopp_key_value.key.value.service.redis'
+
+    wopp_key_value.key.value.service.mongo.cached:
+        class: %wopp_key_value.key.value.service.cache.class%
+        arguments:
+          - '@wopp_key_value.key.value.service.mongo'
+
+    wopp_key_value.predis.client.factory:
+        class: %wopp_key_value.predis.client.factory.class%
+        arguments:
+          - '%wopp_key_value.redis_connection%'
+
+    wopp.redis.client:
+        class: %wopp_key_value.key.value.service.redis.class%
+        factory_service: wopp_key_value.predis.client.factory
+        factory_method: getInstance
+
+    wopp.repository.factory:
+        class: %wopp_key_value.repository.factory.class%
+        arguments:
+          - '@service_container'
